@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rlhf_eval
+    ports:
+      - "5432:5432"
+    volumes:
+      - rlhf_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/rlhf_eval
+      CLONE_BASE_DIR: /data/repos
+      CORS_ORIGINS: http://localhost:5173
+    volumes:
+      - repo_clones:/data/repos
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  rlhf_pg:
+  repo_clones:
