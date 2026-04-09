@@ -1,0 +1,26 @@
+databases:
+  - name: rlhf-eval-db
+    databaseName: rlhf_eval
+    user: postgres
+    plan: free
+
+services:
+  - type: web
+    name: rlhf-eval-api
+    plan: free
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rlhf-eval-db
+          property: connectionString
+      - key: CLONE_BASE_DIR
+        value: /data/repos
+      - key: CORS_ORIGINS
+        sync: false   # ← you will paste your Vercel URL here after deploying frontend
+    disk:
+      name: repo-clones
+      mountPath: /data/repos
+      sizeGB: 1
